@@ -17,19 +17,14 @@ origins = [
 app.add_middleware(CORSMiddleware, allow_origins=origins)
 
 class TransactionBase(BaseModel):
-    amount: float
+    name: str
+    value: float
     category: str
-    description: str
-    is_income: bool
+    reason: str
     date: str
-
 
 class TransactionModel(TransactionBase):
     id: int 
-
-    class Config:
-        orm_mode = True 
-
 
 def get_db():
     db = SessionLocal()
@@ -43,8 +38,6 @@ def get_db():
 db_dependecy = Annotated[Session, Depends(get_db)]
 models.Base.metadata.create_all(bind=engine)
 
-
-
 @app.post("/transactions/", response_model = TransactionModel)
 async def transactions(transaction: TransactionBase, db: db_dependecy):
     db_transaction = models.Transaction(**transaction.dict())
@@ -52,7 +45,6 @@ async def transactions(transaction: TransactionBase, db: db_dependecy):
     db.commit()
     db.refresh(db_transaction)
     return db_transaction
-
 
 @app.get("/transactions/", response_model=List[TransactionModel])
 async def read_transactions(db: db_dependecy, skip:int = 0, limit:int = 100):
